@@ -70,7 +70,8 @@ class DifferentiableQueryRules(object):
         self.query = tf.placeholder(tf.int32, [None])
         self.operator_tensor = tf.SparseTensor(indices=self.non_zero_indices,
                                                values=np.ones(len(self.non_zero_indices), dtype=np.float32),
-                                               dense_shape=[5, self.num_relations, self.num_entities, self.num_entities])
+                                               dense_shape=[self.batch_size, self.num_relations, self.num_entities,
+                                                            self.num_entities])
         self.operator_tensor = tf.sparse_reorder(self.operator_tensor)
 
         self.x_oh = tf.one_hot(self.x, depth=self.num_entities, dtype=tf.float32)
