@@ -18,7 +18,7 @@ parser.parse_kb(path, batch_size)
 num_entities = parser.num_entities
 num_relations = parser.num_relations
 
-model = DifferentiableQueryRules(max_rule_len, parser.get_facts(), num_entities, num_relations)
+model = DifferentiableQueryRules(max_rule_len, parser.get_facts(), num_entities, num_relations, batch_size)
 tg = TripleBatchGenerator(parser.triples, parser.ent_dict, parser.rel_dict, 0, rnd)
 
 inverse_rel_dict = dict(zip(parser.rel_dict.values(), parser.rel_dict.keys()))

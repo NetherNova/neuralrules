@@ -17,6 +17,7 @@ def tensor_mul_batch_vector(vector, tensor):
     """
     # vector [batch_size, d1, 1, 1]
     vector_exp = tf.expand_dims(tf.expand_dims(vector, 2), 2)
+    # non-sparse broadcasting:
     # tensor [1, d1, d2, d3]
     # tensor_exp = tf.expand_dims(tensor, 0)
     # [batch_size, d1, d2, d3]
@@ -33,11 +34,12 @@ class DifferentiableQueryRules(object):
     In this simple model, it is assumed that all rules have the same length *max_rule_len*
     cf. [Fan Yang, NIPS 2017]
     """
-    def __init__(self, max_rule_len, non_zero_indices, num_entities, num_relations):
+    def __init__(self, max_rule_len, non_zero_indices, num_entities, num_relations, batch_size):
         self.max_rule_len = max_rule_len
         self.non_zero_indices = non_zero_indices
         self.num_entities = num_entities
         self.num_relations = num_relations
+        self.batch_size = batch_size
 
     def create_graph(self):
 
@@ -86,7 +88,9 @@ class DifferentiableQueryRules(object):
         # [batch_size, num_relations]
         self.a_vector = tf.nn.embedding_lookup(self.a_matrix, 0)
 
-        # [batch_size, num_relations, 1, 1] * [1, num_relations, num_entities, num_entities]
+        # broadcast relation weight to each respective "1" element in the operator tensor
+
+        # [batch_size, num_relations, 1, 1] * [batch_size, num_relations, num_entities, num_entities]
         # ==> [batch_size,num_relations,num_entities,num_entities]
         self.weighted_operator_tensor = tensor_mul_batch_vector(self.a_vector, self.operator_tensor)
 
@@ -149,16 +153,17 @@ if __name__ == '__main__':
     num_entities = 4
     num_relations = 3
     max_rule_len = 2
+    batch_size = 5
     # two links in the knowledge graph
     # [relation, object, subject]
     non_zero_indices = [[2, 2, 1], [1, 1, 0]]
 
     non_zero_indices_batch = []
-    for b in range(5):
+    for b in range(batch_size):
         for ind in non_zero_indices:
             non_zero_indices_batch.append([b] + ind)
 
-    sq = DifferentiableQueryRules(max_rule_len, non_zero_indices_batch, num_entities, num_relations)
+    sq = DifferentiableQueryRules(max_rule_len, non_zero_indices_batch, num_entities, num_relations, batch_size)
     # can be seen like: how to get from entity 0 to entity 2 to explain their relation 2
     x_batch = [0, 0, 0, 0, 0]
     y_batch = [2, 2, 2, 2, 2]
